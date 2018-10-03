@@ -142,6 +142,7 @@ $c->{datacite_mapping_title} = sub {
 # publisher this is derived from the eprint.publisher
 # https://schema.datacite.org/meta/kernel-4.0/metadata.xsd#publisher
 
+# NOTE: This is not run when an eprint has no publisher. Currently worked around in DataCiteXML->output_dataobj()
 $c->{datacite_mapping_publisher} = sub {
 
     my($xml, $dataobj, $repo) = @_;
@@ -506,24 +507,27 @@ $c->{validate_datacite} = sub
 				title=>$title );
 	}
 
-	if( !$eprint->is_set( "publisher" ) )
-	{
-		my $publisher = $xml->create_element( "span", class=>"ep_problem_field:publisher" );
-        my $default_publisher = $repository->make_text( $repository->get_conf("datacitedoi","publisher") );
-		push @problems, $repository->html_phrase( 
-				"datacite_validate:need_publisher",
-				publisher=>$publisher,
-                default_publisher => $default_publisher);
-	}
+	# Publisher check removed, if publisher is absent we use a default during Export::DataCiteXML->output_dataobj()
+	# Ideally we'll find a way to have our validation and fallback too.
+# 	if( !$eprint->is_set( "publisher" ) )
+# 	{
+# 		my $publisher = $xml->create_element( "span", class=>"ep_problem_field:publisher" );
+#         my $default_publisher = $repository->make_text( $repository->get_conf("datacitedoi","publisher") );
+# 		push @problems, $repository->html_phrase( 
+# 				"datacite_validate:need_publisher",
+# 				publisher=>$publisher,
+#                 default_publisher => $default_publisher);
+# 	}
 
-	if( !$eprint->is_set( "date" ) && (!$eprint->is_set( "date_type" ) || $eprint->value( "date_type" ) eq "published") )
-	{
-		my $dates = $xml->create_element( "span", class=>"ep_problem_field:dates" );
-
-		push @problems, $repository->html_phrase( 
-				"datacite_validate:need_published_year",
-				dates=>$dates );
-	}
+	# Publication date check removed , if using default publisher need to magic up a date too
+# 	if( !$eprint->is_set( "date" ) || !$eprint->is_set( "date_type" ) || ($eprint->value( "date_type" ) ne "published") )
+# 	{
+# 		my $dates = $xml->create_element( "span", class=>"ep_problem_field:dates" );
+#
+# 		push @problems, $repository->html_phrase(
+# 				"datacite_validate:need_published_year",
+# 				dates=>$dates );
+# 	}
 
 	return( @problems );
 };

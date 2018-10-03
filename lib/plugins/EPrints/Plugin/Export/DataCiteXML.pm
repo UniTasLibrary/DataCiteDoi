@@ -66,10 +66,22 @@ sub output_dataobj
                     $entry->appendChild( $mapped_element ) if(defined $mapped_element);
             }
      }
-     
-     # Add in our publisher from the config
-     $entry->appendChild( $xml->create_data_element( "publisher", $repo->get_conf( "datacitedoi", "publisher") ) );
-    
+
+    if (!$entry->getElementsByTagName('publisher')) {
+        # If not already set, add in our publisher from the config
+        $entry->appendChild( $xml->create_data_element( "publisher", $repo->get_conf( "datacitedoi", "publisher") ) );
+    }
+
+    if (!$entry->getElementsByTagName('publicationYear')) {
+        # If no publisher set we'll have to make do with some other date.
+        if($dataobj->exists_and_set("date")) {
+            $dataobj->get_value( "date" ) =~ /^([0-9]{4})/;
+            my $pub_year = $1; 
+            $entry->appendChild( $xml->create_data_element( "publicationYear", $pub_year));
+            print STDERR "added date";
+        }
+    }
+
         # There is no field for rights at EPrints level so we derive rights from document
         # metadata and as such we need to call our derivation routine outside the above loop
         if($repo->can_call("datacite_mapping_rights_from_docs")){
